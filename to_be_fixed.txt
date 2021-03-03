@@ -1,0 +1,27 @@
+## APP :
+
+- Créer une condition pour une Localisation de la mission égale à "Atelier".
+- Créer des entrées au Log pour les fonctions importantes.
+- Créer un bouton pour enregistrer le planning hebdomadaire.
+- Afficher une Pop-Up pour rappeler à l'utilisateur de créer une mission
+
+## APP_VIEWER :
+
+- Gérer la mise en page de chaque Tab lorsque l'application est en
+  plein écran.
+- Créer des entrées au Log pour les fonctions importantes.
+- Supprimer les imports non nécéssaires.
+
+## API :
+
+- Verifier si il existe des fonctions inutiles.
+- Les supprimer.
+
+## APP_VIEWER :
+
+- Créer Interface graphique.
+- Demander la version à installer.
+- Demander l'adresse de la base de donnée.
+- Demander dans quel dossier installer les fichiers de l'application.
+- Demander confirmation de création d'un racourci bureau (Oui par défaut).
+- Avec le module OS, copier les fichiers dans le dossier de destination.
