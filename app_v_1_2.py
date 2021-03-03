@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 import os
 import sys
@@ -12,17 +12,7 @@ from PyQt5.QtGui import *
 from datetime import date, datetime
 import textwrap
 
-from api_mat_v_2 import get_stock_item_names, get_tech_stock_item_names
-from api_mat_v_2 import get_one_stock_stockCount, get_one_tech_stock_stockCount
-from api_mat_v_2 import get_one_stock_atelCount, get_one_tech_stock_atelCount
-from api_mat_v_2 import get_nonull_atelCount_items, get_nonull_tech_atelCount_items
-from api_mat_v_2 import get_prets_localisations, get_one_prets_type, get_one_prets_list, calculate_total_prets
-from api_mat_v_2 import get_mission_ids, get_mission_id_from_title_and_date, get_ids_from_date, get_date_from_id, get_time_from_id, get_title_from_id
-from api_mat_v_2 import get_type_from_id, get_description_from_id, get_matos_from_id, get_return_status_from_id
-from api_mat_v_2 import get_return_date_from_id, get_return_time_from_id, get_localisation_from_id, cancel_mission_from_id
-from api_mat_v_2 import create_new_mission, create_new_stock_item, create_new_tech_stock_item, create_prets
-from api_mat_v_2 import modify_stock_item, modify_tech_stock_item, update_pret_list, create_printable_mission
-from api_mat_v_2 import remove_stock_item, remove_tech_stock_item, remove_prets
+from api_mat_v_2 import *
 
 CUR_DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(CUR_DIR, "data")
