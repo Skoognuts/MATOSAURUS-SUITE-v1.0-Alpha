@@ -8,7 +8,7 @@ Gestion des stocks, gestion de l'emploi du temps et des missions.
 - Matosaurus Viewer v1.0-Alpha :
 Navigateur, aperçu des stocks.
 
-- Installer.
+- Programme d'installation.
 
 Créé à l'aide de Python 3.7 et PyQt5.
 Julien Labatut
