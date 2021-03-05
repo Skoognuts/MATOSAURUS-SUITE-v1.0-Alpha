@@ -22,9 +22,9 @@ class Window(QtWidgets.QWidget):
         self.setWindowTitle("MATOSAURUS SUITE INSTALLER - Alpha")
         self.setStyleSheet("background-color: rgb(200, 200, 255)")
         self.setMinimumWidth(750)
-        self.setMinimumHeight(528)
+        self.setMinimumHeight(508)
         self.setMaximumWidth(750)
-        self.setMaximumHeight(528)
+        self.setMaximumHeight(508)
         self.setWindowIcon(QtGui.QIcon(ICON_FILE))
         
         self.windowUI()
@@ -34,17 +34,19 @@ class Window(QtWidgets.QWidget):
     def windowUI(self):
         self.grid_layout = QtWidgets.QGridLayout(self)
 
+        self.lbl_title = QtWidgets.QLabel("Bienvenue dans le programme d'installation \nde la suite MATOSAURUS.")
+        self.lbl_title.setFont(QtGui.QFont("sanserif", 18))
+        self.lbl_title.setStyleSheet('color:black')
+
         self.btn_continue = QtWidgets.QPushButton("Continuer", self)
 
         self.lbl_rex_pic = QtWidgets.QLabel(self)
         pixmap = QPixmap(REX_FILE)
         self.lbl_rex_pic.setPixmap(pixmap)
-        self.lbl_rex_pic.setMinimumWidth(246)
-        self.lbl_rex_pic.setMinimumHeight(508)
 
-        self.grid_layout.addWidget(self.lbl_rex_pic, 0, 0, 1, 1)
-        self.grid_layout.setColumnMinimumWidth(0, 246)
-        self.grid_layout.addWidget(self.btn_continue, 0, 1, 1, 1)
+        self.grid_layout.addWidget(self.lbl_rex_pic, 0, 0, 2, 1)
+        self.grid_layout.addWidget(self.lbl_title, 0, 1, 1, 4)
+        self.grid_layout.addWidget(self.btn_continue, 1, 4, 1, 1)
 
     def setup_connections(self):
         self.btn_continue.clicked.connect(self.window2)
