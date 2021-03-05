@@ -20,7 +20,7 @@ class Window(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("MATOSAURUS SUITE INSTALLER - Alpha")
-        self.setStyleSheet("background-color: rgb(200, 200, 255)")
+        self.setStyleSheet("background-color: rgb(215, 215, 255)")
         self.setMinimumWidth(700)
         self.setMinimumHeight(508)
         self.setMaximumWidth(700)
@@ -66,17 +66,67 @@ class Window(QtWidgets.QWidget):
 
     def setup_connections(self):
         self.btn_continue_1.clicked.connect(self.window2)
+        self.btn_cancel_1.clicked.connect(self.cancel)
+
+    def cancel(self):
+        self.close()
 
     def window2(self):
         self.w = Window2()
         self.w.show()
-        self.hide()
+        self.close()
 
-class Window2(QMainWindow):
+class Window2(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("MATOSAURUS SUITE INSTALLER - Alpha")
-        self.setStyleSheet("background-color: rgb(200, 200, 255)")
+        self.setStyleSheet("background-color: rgb(215, 215, 255)")
+        self.setMinimumWidth(700)
+        self.setMinimumHeight(508)
+        self.setMaximumWidth(700)
+        self.setMaximumHeight(508)
+        self.setWindowIcon(QtGui.QIcon(ICON_FILE))
+
+        self.windowUI()
+        self.setup_connections()
+        self.show()
+
+    def windowUI(self):
+        self.grid_layout = QtWidgets.QGridLayout(self)
+
+        self.btn_continue_2 = QtWidgets.QPushButton("Suivant  >", self)
+        self.btn_cancel_2 = QtWidgets.QPushButton("Annuler", self)
+
+        self.btn_continue_2.setStyleSheet("background-color: rgb(150, 150, 255)")
+        self.btn_cancel_2.setStyleSheet("background-color: rgb(150, 150, 255)")
+
+        self.lbl_rex_pic = QtWidgets.QLabel(self)
+        pixmap = QPixmap(REX_FILE)
+        self.lbl_rex_pic.setPixmap(pixmap)
+
+        self.grid_layout.addWidget(self.lbl_rex_pic, 0, 0, 6, 1)
+        self.grid_layout.addWidget(self.btn_continue_2, 5, 3, 1, 1)
+        self.grid_layout.addWidget(self.btn_cancel_2, 5, 4, 1, 1)
+
+    def setup_connections(self):
+        self.btn_continue_2.clicked.connect(self.window3)
+        self.btn_cancel_2.clicked.connect(self.window1)
+
+    def window1(self):
+        self.w = Window()
+        self.w.show()
+        self.close()
+
+    def window3(self):
+        self.w = Window3()
+        self.w.show()
+        self.hide()
+
+class Window3(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("MATOSAURUS SUITE INSTALLER - Alpha")
+        self.setStyleSheet("background-color: rgb(215, 215, 255)")
         self.setMinimumWidth(700)
         self.setMinimumHeight(508)
         self.setMaximumWidth(700)
