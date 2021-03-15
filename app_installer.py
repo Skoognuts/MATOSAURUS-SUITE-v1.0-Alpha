@@ -484,10 +484,6 @@ if __name__ == "__main__":
     window = Window()
     sys.exit(app.exec())
 
-## Choisir l'adresse de la base de données SQL.
-
-## Demander confirmation de création d'un racourci bureau (Oui par défaut).
-
 ## Copier les fichier de l'application dans le dossier de destination.
 
 ## Appuyer sur "Quitter" pour quitter le programme d'installation.
