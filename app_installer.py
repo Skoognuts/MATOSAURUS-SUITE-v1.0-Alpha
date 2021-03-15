@@ -6,7 +6,7 @@ import sqlite3
 import logging
 
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QToolTip, QMessageBox, QLabel)
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QToolTip, QMessageBox, QLabel, QFileDialog)
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
@@ -15,6 +15,10 @@ DATA_DIR = os.path.join(CUR_DIR, "data")
 ICON_FILE = os.path.join(DATA_DIR, "icone.png")
 REX_FILE = os.path.join(DATA_DIR, "installer_rex.png")
 LOG_FILE = os.path.join(CUR_DIR, "log/mat_app.log")
+
+class Version(str):
+    def __init__(self, vers):
+        self.vers = ""
 
 class Window(QtWidgets.QWidget):
     def __init__(self):
@@ -65,7 +69,7 @@ class Window(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.btn_cancel_1, 5, 4, 1, 1)
 
         self.grid_layout.setRowStretch(0, 1)
-        self.grid_layout.setRowStretch(1, 1)
+        self.grid_layout.setRowStretch(1, 2)
         self.grid_layout.setRowStretch(2, 2)
         self.grid_layout.setRowStretch(3, 2)
         self.grid_layout.setRowStretch(4, 3)
@@ -140,7 +144,7 @@ class Window2(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.btn_back_2, 6, 3, 1, 1)
 
         self.grid_layout.setRowStretch(0, 1)
-        self.grid_layout.setRowStretch(1, 1)
+        self.grid_layout.setRowStretch(1, 2)
         self.grid_layout.setRowStretch(2, 1)
         self.grid_layout.setRowStretch(3, 2)
         self.grid_layout.setRowStretch(4, 1)
@@ -166,12 +170,19 @@ class Window2(QtWidgets.QWidget):
         self.close()
 
     def window3(self):
-        if self.cb_prog_1.isChecked() or self.cb_prog_2.isChecked() :
+        global version
+        if self.cb_prog_1.isChecked() :
+            version = Version("Matosaurus Rex")
+            self.w = Window3()
+            self.w.show()
+            self.hide()
+        elif self.cb_prog_2.isChecked() :
+            version = Version("Matosaurus Viewer")
             self.w = Window3()
             self.w.show()
             self.hide()
         else :
-            QtWidgets.QMessageBox.warning(self, "ATTENTION", "Veuillez choisir au moins une version          ")
+            QtWidgets.QMessageBox.warning(self, "ATTENTION", "Veuillez choisir au moins une version.          ")
 
 class Window3(QtWidgets.QWidget):
     def __init__(self):
@@ -225,14 +236,28 @@ class Window3(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.btn_back_3, 5, 3, 1, 1)
 
     def setup_default(self):
+        global DISC
+        global default_path
         DISC = CUR_DIR.split(":/")[0]
-        default_path = f"{DISC.capitalize()}:\\Matosaurus Suite"
+        vers = Version(version)
+        default_path = f"{DISC.capitalize()}:\\{vers}"
         self.le_browse_3.setText(default_path)
 
     def setup_connections(self):
         self.btn_continue_3.clicked.connect(self.window4)
         self.btn_back_3.clicked.connect(self.window2)
+        self.btn_browse_3.clicked.connect(self.browser)
 
+    def browser(self):
+        global path
+        root_path = f"{DISC.capitalize()}:\\"
+        path = QFileDialog.getExistingDirectory(self, "Sélectionner un dossier d'installation :", root_path)
+        if path != default_path :
+            self.le_browse_3.setText(path)
+        if path == "" :
+            path = default_path
+            self.le_browse_3.setText(path)
+        
     def window2(self):
         self.w = Window2()
         self.w.show()
@@ -247,10 +272,6 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = Window()
     sys.exit(app.exec())
-
-## Choisir la version à installer.
-
-## Choisir le chemin du dossier d'installation.
 
 ## Choisir l'adresse de la base de données SQL.
 
