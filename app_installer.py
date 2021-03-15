@@ -16,6 +16,7 @@ DATA_DIR = os.path.join(CUR_DIR, "data")
 VERS_FILE = os.path.join(DATA_DIR, "version.json")
 PATH_FILE = os.path.join(DATA_DIR, "path.json")
 SHARED_PATH_FILE = os.path.join(DATA_DIR, "shared_path.json")
+SHORTCUT_FILE = os.path.join(DATA_DIR, "shortcut.json")
 ICON_FILE = os.path.join(DATA_DIR, "icone.png")
 REX_FILE = os.path.join(DATA_DIR, "installer_rex.png")
 LOG_FILE = os.path.join(CUR_DIR, "log/mat_app.log")
@@ -143,7 +144,7 @@ class Window2(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.btn_continue_2, 6, 4, 1, 1)
         self.grid_layout.addWidget(self.btn_back_2, 6, 3, 1, 1)
 
-        self.grid_layout.setRowStretch(0, 1)
+        self.grid_layout.setRowStretch(0, 0)
         self.grid_layout.setRowStretch(1, 2)
         self.grid_layout.setRowStretch(2, 1)
         self.grid_layout.setRowStretch(3, 2)
@@ -312,6 +313,8 @@ class Window4(QtWidgets.QWidget):
         self.btn_browse_4 = QtWidgets.QPushButton("Parcourir", self)
         self.le_browse_4 = QtWidgets.QLineEdit("", self)
 
+        self.cb_shortcut = QtWidgets.QCheckBox("  - Créer un raccourci sur le bureau ?", self)
+
         self.btn_continue_4.setStyleSheet("background-color: rgb(150, 150, 255)")
         self.btn_back_4.setStyleSheet("background-color: rgb(150, 150, 255)")
         self.btn_browse_4.setStyleSheet("background-color: rgb(150, 150, 255)")
@@ -328,13 +331,23 @@ class Window4(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.le_browse_4, 2, 1, 1, 3)
         self.grid_layout.addWidget(self.btn_browse_4, 2, 4, 1, 1)
 
+        self.grid_layout.addWidget(self.cb_shortcut, 3, 1, 1, 4)
+
         self.grid_layout.addWidget(self.lbl_rex_pic, 0, 0, 6, 1)
         self.grid_layout.addWidget(self.btn_continue_4, 5, 4, 1, 1)
         self.grid_layout.addWidget(self.btn_back_4, 5, 3, 1, 1)
 
+        self.grid_layout.setRowStretch(0, 0)
+        self.grid_layout.setRowStretch(1, 1)
+        self.grid_layout.setRowStretch(2, 1)
+        self.grid_layout.setRowStretch(3, 3)
+        self.grid_layout.setRowStretch(4, 1)
+        self.grid_layout.setRowStretch(5, 1)
+
     def setup_default(self):
         global DISC
         global default_path
+        self.cb_shortcut.setChecked(True)
         DISC = CUR_DIR.split(":/")[0]
         with open(VERS_FILE, "r", encoding='utf8') as f :
             data = json.load(f)
@@ -359,6 +372,16 @@ class Window4(QtWidgets.QWidget):
         self.close()
 
     def window5(self):
+        if self.cb_shortcut.isChecked() == True :
+            with open(SHORTCUT_FILE, "w", encoding='utf8') as f :
+                vers = {"shortcut" : "Oui"}
+                json.dump(vers, f, ensure_ascii=False)
+            f.close()
+        else :
+            with open(SHORTCUT_FILE, "w", encoding='utf8') as f :
+                vers = {"shortcut" : "Non"}
+                json.dump(vers, f, ensure_ascii=False)
+            f.close()
         with open(SHARED_PATH_FILE, "w", encoding='utf8') as f :
             vers = {"shared_directory" : self.le_browse_4.text()}
             json.dump(vers, f, ensure_ascii=False)
@@ -399,7 +422,7 @@ class Window5(QtWidgets.QWidget):
         self.btn_install = QtWidgets.QPushButton("Installer", self)
         self.btn_back_5 = QtWidgets.QPushButton("< Retour", self)
 
-        self.btn_install.setStyleSheet("background-color: rgb(150, 150, 255)")
+        self.btn_install.setStyleSheet("background-color: rgb(120, 120, 255)")
         self.btn_back_5.setStyleSheet("background-color: rgb(150, 150, 255)")
 
         self.lbl_rex_pic = QtWidgets.QLabel(self)
@@ -437,8 +460,12 @@ class Window5(QtWidgets.QWidget):
             data = json.load(f)
         f.close()
         sh_directory = data["shared_directory"]
+        with open(SHORTCUT_FILE, "r", encoding='utf8') as f :
+            data = json.load(f)
+        f.close()
+        shortcut = data["shortcut"]
 
-        self.te_param_5.setText(f"Paramètres d'installation :\n\n------------------------------------------------------------------------------\n\n - Version : {vers}.\n\n - Dossier d'installation : \n    {directory}.\n\n - Chemin d'accès à la base de données partagée : \n    {sh_directory}.")
+        self.te_param_5.setText(f"Paramètres d'installation :\n\n------------------------------------------------------------------------------\n\n - Version : {vers}.\n\n - Dossier d'installation : \n    {directory}.\n\n - Chemin d'accès à la base de données partagée : \n    {sh_directory}.\n\n - Créer un raccourci sur le Bureau : {shortcut}.")
 
     def setup_connections(self):
         self.btn_install.clicked.connect(self.window6)
