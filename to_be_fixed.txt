@@ -17,10 +17,8 @@
 - Verifier si il existe des fonctions inutiles.
 - Les supprimer.
 
-## APP_VIEWER :
+## APP_INSTALLER :
 
-- Créer Interface graphique.
-- Demander la version à installer.
 - Demander l'adresse de la base de donnée.
 - Demander dans quel dossier installer les fichiers de l'application.
 - Demander confirmation de création d'un racourci bureau (Oui par défaut).
