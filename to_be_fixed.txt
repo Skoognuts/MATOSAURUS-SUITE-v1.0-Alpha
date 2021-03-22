@@ -3,7 +3,7 @@
 - Créer une condition pour une Localisation de la mission égale à "Atelier".
 - Créer des entrées au Log pour les fonctions importantes.
 - Créer un bouton pour enregistrer le planning hebdomadaire.
-- Afficher une Pop-Up pour rappeler à l'utilisateur de créer une mission
+- Afficher une Pop-Up pour rappeler à l'utilisateur de créer une mission.
 
 ## APP_VIEWER :
 

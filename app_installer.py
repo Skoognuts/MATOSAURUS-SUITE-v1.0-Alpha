@@ -274,12 +274,20 @@ class Window3(QtWidgets.QWidget):
 
     def window4(self):
         with open(PATH_FILE, "w", encoding='utf8') as f :
-            vers = {"directory" : self.le_browse_3.text()}
-            json.dump(vers, f, ensure_ascii=False)
+            directory = {"directory" : self.le_browse_3.text()}
+            json.dump(directory, f, ensure_ascii=False)
         f.close()
-        self.w = Window4()
-        self.w.show()
-        self.close()
+        with open(VERS_FILE, "r", encoding='utf8') as f :
+            vers = json.load(f)
+        f.close()
+        if vers["version"] == "Matosaurus Rex" :
+            self.w = Window4()
+            self.w.show()
+            self.close()
+        if vers["version"] == "Matosaurus Viewer" :
+            self.w = Window4_1()
+            self.w.show()
+            self.close()
 
 class Window4(QtWidgets.QWidget):
     def __init__(self):
@@ -389,6 +397,118 @@ class Window4(QtWidgets.QWidget):
         self.w = Window5()
         self.w.show()
         self.close()
+
+class Window4_1(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("MATOSAURUS SUITE INSTALLER - Alpha")
+        self.setStyleSheet("background-color: rgb(215, 215, 255)")
+        self.setMinimumWidth(700)
+        self.setMinimumHeight(508)
+        self.setMaximumWidth(700)
+        self.setMaximumHeight(508)
+        self.setWindowIcon(QtGui.QIcon(ICON_FILE))
+        
+        self.windowUI()
+        self.setup_default()
+        self.setup_connections()
+        self.show()
+
+    def windowUI(self):
+        self.grid_layout = QtWidgets.QGridLayout(self)
+
+        self.lbl_title = QtWidgets.QLabel("Sélectionner le chemin vers la base de \ndonnées partagée")
+        self.lbl_title.setFont(QtGui.QFont("sanserif", 18))
+        self.lbl_title.setStyleSheet('color:black')
+
+        self.lbl_desc_4 = QtWidgets.QLabel("Veuillez sélectionner le chemin vers la base de données partagée. \nIl est nécessaire qu'un ordinateur de votre réseau soit équipé de \nMATOSAURUS REX pour disposer de la base de données partagée.")
+
+        self.lbl_desc_4.setFont(QtGui.QFont("sanserif", 10))
+
+        self.btn_continue_4 = QtWidgets.QPushButton("Suivant  >", self)
+        self.btn_back_4 = QtWidgets.QPushButton("< Retour", self)
+        self.btn_browse_4 = QtWidgets.QPushButton("Parcourir", self)
+        self.le_browse_4 = QtWidgets.QLineEdit("", self)
+
+        self.cb_shortcut = QtWidgets.QCheckBox("  - Créer un raccourci sur le bureau ?", self)
+
+        self.btn_continue_4.setStyleSheet("background-color: rgb(150, 150, 255)")
+        self.btn_back_4.setStyleSheet("background-color: rgb(150, 150, 255)")
+        self.btn_browse_4.setStyleSheet("background-color: rgb(150, 150, 255)")
+        self.le_browse_4.setStyleSheet("background-color: rgb(255, 255, 255)")
+        self.le_browse_4.setReadOnly(True)
+
+        self.lbl_rex_pic = QtWidgets.QLabel(self)
+        pixmap = QPixmap(REX_FILE)
+        self.lbl_rex_pic.setPixmap(pixmap)
+
+        self.grid_layout.addWidget(self.lbl_title, 0, 1, 1, 4)
+        self.grid_layout.addWidget(self.lbl_desc_4, 1, 1, 1, 4)
+
+        self.grid_layout.addWidget(self.le_browse_4, 2, 1, 1, 3)
+        self.grid_layout.addWidget(self.btn_browse_4, 2, 4, 1, 1)
+
+        self.grid_layout.addWidget(self.cb_shortcut, 3, 1, 1, 4)
+
+        self.grid_layout.addWidget(self.lbl_rex_pic, 0, 0, 6, 1)
+        self.grid_layout.addWidget(self.btn_continue_4, 5, 4, 1, 1)
+        self.grid_layout.addWidget(self.btn_back_4, 5, 3, 1, 1)
+
+        self.grid_layout.setRowStretch(0, 0)
+        self.grid_layout.setRowStretch(1, 1)
+        self.grid_layout.setRowStretch(2, 1)
+        self.grid_layout.setRowStretch(3, 3)
+        self.grid_layout.setRowStretch(4, 1)
+        self.grid_layout.setRowStretch(5, 1)
+
+    def setup_default(self):
+        global DISC
+        global default_path
+        self.cb_shortcut.setChecked(True)
+        DISC = CUR_DIR.split(":/")[0]
+        with open(VERS_FILE, "r", encoding='utf8') as f :
+            data = json.load(f)
+        f.close()
+        vers = data["version"]
+        default_path = f"{DISC.capitalize()}:/{vers}/database"
+        self.le_browse_4.setText(default_path)
+
+    def setup_connections(self):
+        self.btn_continue_4.clicked.connect(self.window5)
+        self.btn_back_4.clicked.connect(self.window3)
+        self.btn_browse_4.clicked.connect(self.browser)
+
+    def browser(self):
+        shared_path = QFileDialog.getOpenFileName(self, "Sélectionner la base de données partagée :", CUR_DIR, "*.db")
+        shared_path = shared_path[0]
+        print(shared_path)
+        if shared_path != False :
+            self.le_browse_4.setText(shared_path)
+
+    def window3(self):
+        self.w = Window3()
+        self.w.show()
+        self.close()
+
+    def window5(self):
+        if self.cb_shortcut.isChecked() == True :
+            with open(SHORTCUT_FILE, "w", encoding='utf8') as f :
+                vers = {"shortcut" : "Oui"}
+                json.dump(vers, f, ensure_ascii=False)
+            f.close()
+        else :
+            with open(SHORTCUT_FILE, "w", encoding='utf8') as f :
+                vers = {"shortcut" : "Non"}
+                json.dump(vers, f, ensure_ascii=False)
+            f.close()
+        with open(SHARED_PATH_FILE, "w", encoding='utf8') as f :
+            vers = {"shared_directory" : self.le_browse_4.text()}
+            json.dump(vers, f, ensure_ascii=False)
+        f.close()
+        self.w = Window5()
+        self.w.show()
+        self.close()
+
 
 class Window5(QtWidgets.QWidget):
     def __init__(self):
