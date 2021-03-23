@@ -10,8 +10,6 @@ Navigateur, aperçu des stocks.
 
 - Base de données partagée SQLite.
 
-- Programme d'installation.
-
 Créé à l'aide de Python 3.7 et PyQt5.
 Julien Labatut
 j.labatut33127@gmail.com
