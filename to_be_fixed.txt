@@ -16,7 +16,3 @@
 
 - Verifier si il existe des fonctions inutiles.
 - Les supprimer.
-
-## APP_INSTALLER :
-
-- Avec le module OS, copier les fichiers dans le dossier de destination.
