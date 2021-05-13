@@ -2,11 +2,10 @@
 
 import os
 import sys
-import sqlite3
-import logging
+import json
 
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtWidgets import QDesktopWidget, QMessageBox
+from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from datetime import date, datetime
@@ -16,12 +15,8 @@ from api_mat_v_2 import *
 
 CUR_DIR = os.path.dirname(__file__)
 DATA_DIR = os.path.join(CUR_DIR, "data")
-DATA_FILE = os.path.join(DATA_DIR, "database_2.db")
 ICON_FILE = os.path.join(DATA_DIR, "icone.png")
-LOG_FILE = os.path.join(CUR_DIR, "log/mat_app.log")
-
-logging.basicConfig(level = logging.DEBUG, filename = LOG_FILE, filemode = "w", format = "%(levelname)s - %(message)s")
-logging.debug("MATOSAURUS REX LAUNCHED")
+PATH_FILE = os.path.join(CUR_DIR, "db_path_viewer.json")
 
 class App(QtWidgets.QTabWidget):
     def __init__(self, parent = None): # Initialisation de la fenêtre et des fonctions de départ
@@ -66,8 +61,6 @@ class App(QtWidgets.QTabWidget):
 
         self.populate_atel_ref_qty_lw()
         self.populate_atel_search_cbb()
-
-        logging.debug("APP / INIT : Main Window initialized")
 
     def tabMissionUI(self): # Génération du Tab "MISSION CONTROL"
         self.grid_layout = QtWidgets.QGridLayout(self)
@@ -282,7 +275,6 @@ class App(QtWidgets.QTabWidget):
 
         self.setTabText(0," MISSION CONTROL ")
         self.tab_mission.setLayout(self.grid_layout)
-        logging.debug("MISSION CONTROL tab generated")
 
     def tabStockUI(self): # Génération du Tab "STOCK"
         self.grid_layout = QtWidgets.QGridLayout(self)
@@ -321,7 +313,6 @@ class App(QtWidgets.QTabWidget):
 
         self.setTabText(1," STOCK ")
         self.tab_stock.setLayout(self.grid_layout)
-        logging.debug("STOCK tab generated")
 
         self.sliderBarS1 = self.lw_stock_ref.verticalScrollBar()
         self.sliderBarS2 = self.lw_stock_count.verticalScrollBar()
@@ -373,7 +364,6 @@ class App(QtWidgets.QTabWidget):
 
         self.setTabText(2," STOCK TECHNIQUE ")
         self.tab_tech_stock.setLayout(self.grid_layout)
-        logging.debug("STOCK TECHNIQUE tab generated")
 
         self.sliderBarT1 = self.lw_Tstock_ref.verticalScrollBar()
         self.sliderBarT2 = self.lw_Tstock_count.verticalScrollBar()
@@ -433,7 +423,6 @@ class App(QtWidgets.QTabWidget):
 
         self.setTabText(3," PRETS DE MATERIEL ")
         self.tab_pret.setLayout(self.grid_layout)
-        logging.debug("PRETS DE MATERIEL tab generated")
 
     def tabAtelUI(self): # Génération du Tab "ATELIER"
         self.grid_layout = QtWidgets.QGridLayout(self)
@@ -445,7 +434,8 @@ class App(QtWidgets.QTabWidget):
         self.lw_atel_qty = QtWidgets.QListWidget()
         self.lw_atel_search = QtWidgets.QListWidget()
         self.cbb_atel_ref = QtWidgets.QComboBox()
-        self.btn_info = QtWidgets.QPushButton("🛈 INFOS")
+        self.btn_database = QtWidgets.QPushButton("DATABASE")
+        self.btn_update = QtWidgets.QPushButton("ACTUALISER")
 
         self.grid_layout.addWidget(self.lbl_atel_ref, 0, 0, 1, 5)
         self.grid_layout.addWidget(self.lbl_atel_qty, 0, 5, 1, 1)
@@ -454,7 +444,8 @@ class App(QtWidgets.QTabWidget):
         self.grid_layout.addWidget(self.lw_atel_qty, 1, 5, 9, 1)
         self.grid_layout.addWidget(self.lw_atel_search, 2, 6, 8, 5)
         self.grid_layout.addWidget(self.cbb_atel_ref, 1, 6, 1, 3)
-        self.grid_layout.addWidget(self.btn_info, 1, 10, 1, 1)
+        self.grid_layout.addWidget(self.btn_database, 1, 9, 1, 1)
+        self.grid_layout.addWidget(self.btn_update, 1, 10, 1, 1)
 
         for i in range(10) :
             self.grid_layout.setRowStretch(i, 4)
@@ -468,7 +459,8 @@ class App(QtWidgets.QTabWidget):
         self.lw_atel_qty.setStyleSheet("background-color: rgb(255, 255, 255)")
         self.lw_atel_search.setStyleSheet("background-color: rgb(255, 255, 255)")
         self.cbb_atel_ref.setStyleSheet("background-color: rgb(255, 255, 255)")
-        self.btn_info.setStyleSheet("background-color: rgb(255, 255, 150)")
+        self.btn_database.setStyleSheet("background-color: rgb(100, 255, 100)")
+        self.btn_update.setStyleSheet("background-color: rgb(255, 255, 150)")
         self.lw_atel_ref.setAlternatingRowColors(True)
         self.lw_atel_qty.setAlternatingRowColors(True)
         self.lw_atel_search.setAlternatingRowColors(True)
@@ -477,7 +469,6 @@ class App(QtWidgets.QTabWidget):
 
         self.setTabText(4," ATELIER ")
         self.tab_atel.setLayout(self.grid_layout)
-        logging.debug("ATELIER tab generated")
 
         self.sliderBarA1 = self.lw_atel_ref.verticalScrollBar()
         self.sliderBarA2 = self.lw_atel_qty.verticalScrollBar()
@@ -527,9 +518,8 @@ class App(QtWidgets.QTabWidget):
         self.cb_prets_3.clicked.connect(self.checkbox3_gestion)
 
         self.cbb_atel_ref.activated.connect(self.populate_atel_search_lw)
-        self.btn_info.clicked.connect(self.get_info)
-
-        logging.debug("Connections initialized")
+        self.btn_database.clicked.connect(self.get_database)
+        self.btn_update.clicked.connect(self.update)
 
     def setup_default(self): # Définition des valeurs de Widget par défaut
         self.le_mission_date.setReadOnly(True)
@@ -549,8 +539,6 @@ class App(QtWidgets.QTabWidget):
         self.sb_stock_qty.setRange(1, 1000000)
 
         self.sb_Tstock_qty.setRange(1, 1000000)
-
-        logging.debug("Default settings initialized")
 
 ### "MISSION CONTROL" TAB METHODS #####################################################
 
@@ -717,8 +705,7 @@ class App(QtWidgets.QTabWidget):
                     count = ref_and_count.split(" : ")[0]
             
                     if mission_localisation == "Atelier" :
-                        pass
-                        # Soustraire les quantités des prets.
+                        self.rmv_from_elsewhere(prov, ref, count)
                     elif mission_localisation != prov :
                         if prov == "Atelier" :
                             self.add_from_atel(ref, count, mission_localisation)
@@ -804,6 +791,26 @@ class App(QtWidgets.QTabWidget):
         update_pret_list(prov, prov_list_formated)
         update_pret_list(mission_localisation, dest_list_formated)
 
+    def rmv_from_elsewhere(self, prov, ref, count):
+        prov_list_unformated = get_one_prets_list(prov)
+        prov_list = []
+
+        prov_list = prov_list_unformated.split("\n")
+        new_qty = 0
+
+        for item in prov_list :
+            if ref == (item.split(" : ")[0]) :
+                item_qty = int(item.split(" : ")[1])
+                new_qty = item_qty - int(count)
+                prov_list.remove(item)
+                new_item = """%s : %s""" %(ref, new_qty)
+
+        if new_qty != 0 :
+            prov_list.append(new_item)
+
+        prov_list_formated = "\n".join(prov_list)
+        update_pret_list(prov, prov_list_formated)
+
     def print_mission(self, id): # BTN "Imprimer Recapitulatif" du Tab "Mission Control"
         if not self.lw_missions_list.selectedItems() :
             return False
@@ -834,7 +841,7 @@ class App(QtWidgets.QTabWidget):
                 msgBox = QMessageBox()
                 msgBox.setIcon(QMessageBox.Warning)
                 msgBox.setText("Le document est il imprimé avec succés ?")
-                msgBox.setWindowTitle("IMPRIMER UNRECAPITULATIF")
+                msgBox.setWindowTitle("IMPRIMER UN RECAPITULATIF")
                 msgBox.setWindowIcon(QtGui.QIcon(ICON_FILE))
                 msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
 
@@ -950,7 +957,7 @@ class App(QtWidgets.QTabWidget):
         mission_localisation = self.cbb_create_mission_localisation.currentText()
         mission_date = self.de_create_mission_date.text()
         mission_time = self.tie_create_mission_time.text()
-        mission_description = self.te_create_mission_description.toPlainText()
+        mission_description = self.te_create_mission_description.toPlainText().capitalize()
         mission_matos = []
         mission_ids = []
         mission_matos_formated = ""
@@ -1031,7 +1038,7 @@ class App(QtWidgets.QTabWidget):
             f_month = "03"
         if month == "avr." :
             f_month = "04"
-        if month == "mai." :
+        if month == "mai" :
             f_month = "05"
         if month == "juin." :
             f_month = "06"
@@ -1052,26 +1059,29 @@ class App(QtWidgets.QTabWidget):
         return selected_date_formated
 
     def populate_daily_missions_lw(self): # Peuplement du ListWidget des Missions du Jour du Tab "Mission Control"
-        self.lw_missions_list.clear()
-        selected_date = self.calendarWidget.selectedDate()
+        try :
+            self.lw_missions_list.clear()
+            selected_date = self.calendarWidget.selectedDate()
 
-        selected_date_formated = self.translate_date(selected_date)
+            selected_date_formated = self.translate_date(selected_date)
 
-        missions_ids = get_ids_from_date(selected_date_formated)
-        missions = []
+            missions_ids = get_ids_from_date(selected_date_formated)
+            missions = []
 
-        for mission_id in missions_ids :
-            mission_title = get_title_from_id(mission_id)
-            mission_type = get_type_from_id(mission_id)
-            if mission_type == 1 :
-                mission_formated_title = """🟡 %s""" %(mission_title)
-            if mission_type == 2 :
-                mission_formated_title = """🟢 %s""" %(mission_title)
-            if mission_type == 3 :
-                mission_formated_title = """🟣 %s""" %(mission_title)
-            missions.append(mission_formated_title)
-    
-        self.lw_missions_list.addItems(missions)
+            for mission_id in missions_ids :
+                mission_title = get_title_from_id(mission_id)
+                mission_type = get_type_from_id(mission_id)
+                if mission_type == 1 :
+                    mission_formated_title = """🟡 %s""" %(mission_title)
+                if mission_type == 2 :
+                    mission_formated_title = """🟢 %s""" %(mission_title)
+                if mission_type == 3 :
+                    mission_formated_title = """🟣 %s""" %(mission_title)
+                missions.append(mission_formated_title)
+
+            self.lw_missions_list.addItems(missions)
+        except TypeError :
+            pass
 
     def populate_mission_widgets(self): # Peuplement des Widgets de description de la Mission selectionnée du Tab "Mission Control"
         self.raz_mission_widgets()
@@ -1142,29 +1152,36 @@ class App(QtWidgets.QTabWidget):
         self.lw_materiel_necessaire.clear()
 
     def populate_create_type_cbb(self): # Peuplement du ComboBox de Création de Type de Mission du Tab "Mission Control"
+        self.cbb_create_mission_type.clear()
         mission_types = ["", "🟡 Prêt de Matériel", "🟢 Montage / Démontage", "🟣 Technique"]
 
         self.cbb_create_mission_type.addItems(mission_types)
 
     def populate_create_matos_localisation_cbb(self): # Peuplement du ComboBox Localisation de Mission du Tab "Mission Control"
-        self.cbb_create_mission_localisation.clear()
-        matos_localisation = ["", "- Atelier -"]
+        try :
+            self.cbb_create_mission_localisation.clear()
+            matos_localisation = ["", "- Atelier -"]
 
-        prets_localisations = get_prets_localisations()
-        for localisation in prets_localisations :
-            matos_localisation.append(localisation)
+            prets_localisations = get_prets_localisations()
+            for localisation in prets_localisations :
+                matos_localisation.append(localisation)
 
-        self.cbb_create_mission_localisation.addItems(sorted(matos_localisation))
+            self.cbb_create_mission_localisation.addItems(sorted(matos_localisation))
+        except TypeError :
+            pass
 
     def populate_create_matos_prov_cbb(self): # Peuplement du ComboBox de Création de Provenance de Matériel du Tab "Mission Control"
-        self.cbb_create_mission_prov.clear()
-        matos_prov = ["", "- Atelier -"]
+        try :
+            self.cbb_create_mission_prov.clear()
+            matos_prov = ["", "- Atelier -"]
 
-        prets_localisations = get_prets_localisations()
-        for localisation in prets_localisations :
-            matos_prov.append(localisation)
+            prets_localisations = get_prets_localisations()
+            for localisation in prets_localisations :
+                matos_prov.append(localisation)
 
-        self.cbb_create_mission_prov.addItems(sorted(matos_prov))
+            self.cbb_create_mission_prov.addItems(sorted(matos_prov))
+        except TypeError :
+            pass
 
     def populate_create_matos_items_cbb(self): # Peuplement du ComboBox de liste Matériel si "prov" != "Atelier" du Tab "Mission Control"
         self.cbb_create_mission_matos.clear()
@@ -1251,14 +1268,17 @@ class App(QtWidgets.QTabWidget):
 ### "STOCK" TAB METHODS ###############################################################
 
     def populate_stock_lw(self): # Peuplement des ListWidgets du Tab "Stock"
-        self.lw_stock_ref.clear()
-        self.lw_stock_count.clear()
+        try :
+            self.lw_stock_ref.clear()
+            self.lw_stock_count.clear()
 
-        stock_item_names = get_stock_item_names()
-        for item_name in sorted(stock_item_names) :
-            self.lw_stock_ref.addItem(item_name)
-            item_stockCount = get_one_stock_stockCount(item_name)
-            self.lw_stock_count.addItem(str(item_stockCount))
+            stock_item_names = get_stock_item_names()
+            for item_name in sorted(stock_item_names) :
+                self.lw_stock_ref.addItem(item_name)
+                item_stockCount = get_one_stock_stockCount(item_name)
+                self.lw_stock_count.addItem(str(item_stockCount))
+        except TypeError :
+            pass
 
     def add_to_stock(self): # BTN "Ajouter" du Tab "Stock"
         new_stock_item = (self.le_stock_ref.text()).title()
@@ -1310,14 +1330,17 @@ class App(QtWidgets.QTabWidget):
 ### "STOCK TECHNIQUE" TAB METHODS #####################################################
 
     def populate_tech_stock_lw(self): # Peuplement des ListWidgets du Tab "Stock Technique"
-        self.lw_Tstock_ref.clear()
-        self.lw_Tstock_count.clear()
+        try :
+            self.lw_Tstock_ref.clear()
+            self.lw_Tstock_count.clear()
 
-        tech_stock_item_names = get_tech_stock_item_names()
-        for item_name in sorted(tech_stock_item_names) :
-            self.lw_Tstock_ref.addItem(item_name)
-            tech_item_stockCount = get_one_tech_stock_stockCount(item_name)
-            self.lw_Tstock_count.addItem(str(tech_item_stockCount))
+            tech_stock_item_names = get_tech_stock_item_names()
+            for item_name in sorted(tech_stock_item_names) :
+                self.lw_Tstock_ref.addItem(item_name)
+                tech_item_stockCount = get_one_tech_stock_stockCount(item_name)
+                self.lw_Tstock_count.addItem(str(tech_item_stockCount))
+        except TypeError :
+            pass
 
     def populate_tech_stock_type_cbb(self): # Peuplement du ComboBox de Types du Tab "Stock Technique"
         tech_stock_types = [" Type", "ELEC", "LUM", "SON", "STR", "VID", "DIV"]
@@ -1380,32 +1403,35 @@ class App(QtWidgets.QTabWidget):
 ### "PRETS DE MATERIEL" TAB METHODS ###################################################
 
     def populate_prets_localisations_lw(self): # Peuplement du ListWidget de Localisations du Tab "Prets de Matériel"
-        self.lw_prets_local.clear()
-        prets_localisations = get_prets_localisations()
+        try :
+            self.lw_prets_local.clear()
+            prets_localisations = get_prets_localisations()
 
-        for localisation in sorted(prets_localisations) :
-            localisation_type = get_one_prets_type(localisation)
+            for localisation in sorted(prets_localisations) :
+                localisation_type = get_one_prets_type(localisation)
 
-            if localisation_type == 1 :
-                localisation = """🟡 %s""" %(localisation)
-                item = QtWidgets.QListWidgetItem(localisation)
-                self.lw_prets_local.addItem(item)
+                if localisation_type == 1 :
+                    localisation = """🟡 %s""" %(localisation)
+                    item = QtWidgets.QListWidgetItem(localisation)
+                    self.lw_prets_local.addItem(item)
 
-        for localisation in sorted(prets_localisations) :
-            localisation_type = get_one_prets_type(localisation)
+            for localisation in sorted(prets_localisations) :
+                localisation_type = get_one_prets_type(localisation)
 
-            if localisation_type == 2 :
-                localisation = """🟢 %s""" %(localisation)
-                item = QtWidgets.QListWidgetItem(localisation)
-                self.lw_prets_local.addItem(item)
+                if localisation_type == 2 :
+                    localisation = """🟢 %s""" %(localisation)
+                    item = QtWidgets.QListWidgetItem(localisation)
+                    self.lw_prets_local.addItem(item)
 
-        for localisation in sorted(prets_localisations) :
-            localisation_type = get_one_prets_type(localisation)
+            for localisation in sorted(prets_localisations) :
+                localisation_type = get_one_prets_type(localisation)
 
-            if localisation_type == 3 :
-                localisation = """🟣 %s""" %(localisation)
-                item = QtWidgets.QListWidgetItem(localisation)
-                self.lw_prets_local.addItem(item)
+                if localisation_type == 3 :
+                    localisation = """🟣 %s""" %(localisation)
+                    item = QtWidgets.QListWidgetItem(localisation)
+                    self.lw_prets_local.addItem(item)
+        except TypeError :
+            pass
 
     def populate_prets_lists_lw(self): # Peuplement du ListWidget de Listes du Tab "Prets de Matériel"
         self.lw_prets_matos.clear()
@@ -1534,34 +1560,40 @@ class App(QtWidgets.QTabWidget):
 ### "ATELIER" TAB METHODS #############################################################
 
     def populate_atel_ref_qty_lw(self): # Peuplement des ListWidgets "Références" et "Quantité" du Tab "Atelier"
-        self.lw_atel_ref.clear()
-        self.lw_atel_qty.clear()
+        try :
+            self.lw_atel_ref.clear()
+            self.lw_atel_qty.clear()
 
-        atel_stock_item_names = get_stock_item_names()
-        for item_name in sorted(atel_stock_item_names) :
-            self.lw_atel_ref.addItem(item_name)
-            item_atelCount = get_one_stock_atelCount(item_name)
-            self.lw_atel_qty.addItem(str(item_atelCount))
+            atel_stock_item_names = get_stock_item_names()
+            for item_name in sorted(atel_stock_item_names) :
+                self.lw_atel_ref.addItem(item_name)
+                item_atelCount = get_one_stock_atelCount(item_name)
+                self.lw_atel_qty.addItem(str(item_atelCount))
 
-        atel_tech_stock_item_names = get_tech_stock_item_names()
-        for item_name in sorted(atel_tech_stock_item_names) :
-            self.lw_atel_ref.addItem(item_name)
-            item_atelCount = get_one_tech_stock_atelCount(item_name)
-            self.lw_atel_qty.addItem(str(item_atelCount))
+            atel_tech_stock_item_names = get_tech_stock_item_names()
+            for item_name in sorted(atel_tech_stock_item_names) :
+                self.lw_atel_ref.addItem(item_name)
+                item_atelCount = get_one_tech_stock_atelCount(item_name)
+                self.lw_atel_qty.addItem(str(item_atelCount))
+        except TypeError :
+            pass
 
     def populate_atel_search_cbb(self): # Peuplement du ComboBox "Recherche" du Tab "Atelier"
-        self.cbb_atel_ref.clear()
-        atel_search_items = [""]
+        try :
+            self.cbb_atel_ref.clear()
+            atel_search_items = [""]
 
-        stock_item_names = get_stock_item_names()
-        for item_name in sorted(stock_item_names) :
-            atel_search_items.append(item_name)
+            stock_item_names = get_stock_item_names()
+            for item_name in sorted(stock_item_names) :
+                atel_search_items.append(item_name)
 
-        tech_stock_item_names = get_tech_stock_item_names()
-        for item_name in sorted(tech_stock_item_names) :
-            atel_search_items.append(item_name)
+            tech_stock_item_names = get_tech_stock_item_names()
+            for item_name in sorted(tech_stock_item_names) :
+                atel_search_items.append(item_name)
 
-        self.cbb_atel_ref.addItems(atel_search_items)
+            self.cbb_atel_ref.addItems(atel_search_items)
+        except TypeError :
+            pass
 
     def populate_atel_search_lw(self): # Peuplement du ListWidget de Recherche d'items du Tab "Atelier"
         self.lw_atel_search.clear()
@@ -1618,8 +1650,32 @@ class App(QtWidgets.QTabWidget):
             for item in item_list :
                 self.lw_atel_search.addItem(item)
 
-    def get_info(self): # Pop Up d'info sur l'application
-        QtWidgets.QMessageBox.information(self, "INFORMATIONS", "- MATOSAURUS REX - \n\nCréé en 2021 par J.Labatut\nApplication Open-source développée avec Python 3.7.9 \net PyQt 5.\n\n https://github.com/Skoognuts")
+    def update(self): # Actualisation des Widgets apres séléction de la Database
+        get_db_path()
+
+        calculate_total_prets()
+
+        self.populate_daily_missions_lw()
+        self.populate_create_type_cbb()
+        self.populate_create_matos_localisation_cbb()
+        self.populate_create_matos_prov_cbb()
+
+        self.populate_stock_lw()
+
+        self.populate_tech_stock_lw()
+        self.populate_tech_stock_type_cbb()
+
+        self.populate_prets_localisations_lw()
+
+        self.populate_atel_ref_qty_lw()
+        self.populate_atel_search_cbb()
+
+    def get_database(self): # Pop Up de recherche du chemin vers la base de données partagée.
+        raw_path = QtWidgets.QFileDialog.getOpenFileName(self, "Choisir la base de données partagée", "*.db")
+        path = {"path" : raw_path[0]}
+        with open(PATH_FILE, 'w', encoding='utf8') as f :
+            json.dump(path, f)
+        f.close()
 
 ### GENERAL METHODS ###################################################################
 
@@ -1629,15 +1685,11 @@ class App(QtWidgets.QTabWidget):
         self.populate_prets_localisations_lw()
         self.populate_atel_ref_qty_lw()
 
-        logging.debug("ListWidgets re-charged")
-
     def refresh_cbb(self): # Rafraichissement des ComboBox
         self.populate_create_matos_localisation_cbb()
         self.populate_create_matos_prov_cbb()
         self.populate_create_matos_items_cbb()
         self.populate_atel_search_cbb()
-
-        logging.debug("ComboBoxs re-charged")
 
     def refresh_all(self): # Rafraichissement de tous les Widgets
         self.refresh_lw()
@@ -1664,12 +1716,11 @@ class CalendarView(QtWidgets.QWidget):
         self.populate_calendar_saturday_missions()
         self.populate_calendar_sunday_missions()
 
-        logging.debug("CALENDAR VIEW / INIT : Calendar Window initialized")
-
     def calendarUI(self): # Génération du Calendrier Hebdomadaire
         self.grid_layout = QtWidgets.QGridLayout(self)
         
         self.lbl_calendar = QtWidgets.QLabel(" 📅 - PLANNING HEBDOMADAIRE ")
+        self.btn_save = QtWidgets.QPushButton("ENREGISTRER")
         self.btn_update = QtWidgets.QPushButton("ACTUALISER")
 
         self.groupBox1 = QtWidgets.QGroupBox()
@@ -1680,7 +1731,8 @@ class CalendarView(QtWidgets.QWidget):
         self.groupBox6 = QtWidgets.QGroupBox()
         self.groupBox7 = QtWidgets.QGroupBox()
 
-        self.grid_layout.addWidget(self.lbl_calendar, 0, 0, 1, 5)
+        self.grid_layout.addWidget(self.lbl_calendar, 0, 0, 1, 4)
+        self.grid_layout.addWidget(self.btn_save, 0, 4, 1, 1)
         self.grid_layout.addWidget(self.btn_update, 0, 5, 1, 1)
         self.grid_layout.addWidget(self.groupBox1, 1, 0, 2, 1)
         self.grid_layout.addWidget(self.groupBox2, 1, 1, 2, 1)
@@ -1691,6 +1743,7 @@ class CalendarView(QtWidgets.QWidget):
         self.grid_layout.addWidget(self.groupBox7, 2, 5, 1, 1)
 
         self.lbl_calendar.setStyleSheet("background-color: rgb(255, 255, 150); font: 14pt; MS Shell Dlg 2")
+        self.btn_save.setStyleSheet("background-color: rgb(100, 200, 100)")
         self.btn_update.setStyleSheet("background-color: rgb(200, 100, 100)")
 
         self.gridLayout1 = QtWidgets.QGridLayout(self.groupBox1)
@@ -1800,10 +1853,9 @@ class CalendarView(QtWidgets.QWidget):
         self.le_sunday.setReadOnly(True)
         self.lw_sunday.setStyleSheet("background-color: rgb(255, 255, 255)")
 
-        logging.debug("CALENDAR VIEW window generated")
-
     def setup_connection(self): # Parametrage du bouton Update
         self.btn_update.clicked.connect(self.reboot)
+        self.btn_save.clicked.connect(self.save)
 
     def setup_defaults(self): # Parametrage par défaut des Widgets du Calendrier
         self.le_monday.setReadOnly(True)
@@ -2100,7 +2152,7 @@ class CalendarView(QtWidgets.QWidget):
             f_month = "03"
         if month == "avr." :
             f_month = "04"
-        if month == "mai." :
+        if month == "mai" :
             f_month = "05"
         if month == "juin." :
             f_month = "06"
@@ -2134,7 +2186,185 @@ class CalendarView(QtWidgets.QWidget):
         self.populate_calendar_saturday_missions()
         self.populate_calendar_sunday_missions()
 
-        logging.debug("CALENDAR VIEW / INIT : Calendar Window updated")
+    def save(self): # Enregistre le tableau
+        try :
+            matos = []
+            file_name = QtWidgets.QFileDialog.getSaveFileName(self, 'Enregistrer le planning :','' , '.txt')
+            file_path = ("").join(file_name)
+
+            with open(file_path, "w", encoding='utf8') as f :
+                f.write("*********************************** PLANNING DE LA SEMAINE ***********************************\n\n")
+
+                f.write("LUNDI ")
+                monday_date = self.le_monday.text()
+                f.write(monday_date)
+                f.write(" : \n\n")
+
+                monday_missions_ids = get_ids_from_date(monday_date)
+                if monday_missions_ids != [] :
+                    for id in monday_missions_ids :
+                        f.write(get_title_from_id(id).upper())
+                        f.write(" : ")
+                        f.write(get_localisation_from_id(id))
+                        f.write("  -  ")
+                        f.write(get_time_from_id(id))
+                        f.write("\n")
+                        f.write(get_description_from_id(id))
+                        f.write("\n")
+                        matos = get_matos_from_id(id)
+                        if matos != [] :
+                            for item in matos :
+                                f.write(item)
+                        f.write("\n\n")
+
+                f.write("----------------------------------------------------------------------------------------------\n\n")
+
+                f.write("MARDI ")
+                tuesday_date = self.le_tuesday.text()
+                f.write(tuesday_date)
+                f.write(" : \n\n")
+
+                tuesday_missions_ids = get_ids_from_date(tuesday_date)
+                if tuesday_missions_ids != [] :
+                    for id in tuesday_missions_ids :
+                        f.write(get_title_from_id(id).upper())
+                        f.write(" : ")
+                        f.write(get_localisation_from_id(id))
+                        f.write("  -  ")
+                        f.write(get_time_from_id(id))
+                        f.write("\n")
+                        f.write(get_description_from_id(id))
+                        f.write("\n")
+                        matos = get_matos_from_id(id)
+                        if matos != [] :
+                            for item in matos :
+                                f.write(item)
+                        f.write("\n\n")
+
+                f.write("----------------------------------------------------------------------------------------------\n\n")
+
+                f.write("MERCREDI ")
+                wednesday_date = self.le_wednesday.text()
+                f.write(wednesday_date)
+                f.write(" : \n\n")
+
+                wednesday_missions_ids = get_ids_from_date(wednesday_date)
+                if wednesday_missions_ids != [] :
+                    for id in wednesday_missions_ids :
+                        f.write(get_title_from_id(id).upper())
+                        f.write(" : ")
+                        f.write(get_localisation_from_id(id))
+                        f.write("  -  ")
+                        f.write(get_time_from_id(id))
+                        f.write("\n")
+                        f.write(get_description_from_id(id))
+                        f.write("\n")
+                        matos = get_matos_from_id(id)
+                        if matos != [] :
+                            for item in matos :
+                                f.write(item)
+                        f.write("\n\n")
+
+                f.write("----------------------------------------------------------------------------------------------\n\n")
+
+                f.write("JEUDI ")
+                thirsday_date = self.le_thirsday.text()
+                f.write(thirsday_date)
+                f.write(" : \n\n")
+
+                thirsday_missions_ids = get_ids_from_date(thirsday_date)
+                if thirsday_missions_ids != [] :
+                    for id in thirsday_missions_ids :
+                        f.write(get_title_from_id(id).upper())
+                        f.write(" : ")
+                        f.write(get_localisation_from_id(id))
+                        f.write("  -  ")
+                        f.write(get_time_from_id(id))
+                        f.write("\n")
+                        f.write(get_description_from_id(id))
+                        f.write("\n")
+                        matos = get_matos_from_id(id)
+                        if matos != [] :
+                            for item in matos :
+                                f.write(item)
+                        f.write("\n\n")
+
+                f.write("----------------------------------------------------------------------------------------------\n\n")
+
+                f.write("VENDREDI ")
+                friday_date = self.le_friday.text()
+                f.write(friday_date)
+                f.write(" : \n\n")
+
+                friday_missions_ids = get_ids_from_date(friday_date)
+                if friday_missions_ids != [] :
+                    for id in friday_missions_ids :
+                        f.write(get_title_from_id(id).upper())
+                        f.write(" : ")
+                        f.write(get_localisation_from_id(id))
+                        f.write("  -  ")
+                        f.write(get_time_from_id(id))
+                        f.write("\n")
+                        f.write(get_description_from_id(id))
+                        f.write("\n")
+                        matos = get_matos_from_id(id)
+                        if matos != [] :
+                            for item in matos :
+                                f.write(item)
+                        f.write("\n\n")
+
+                f.write("----------------------------------------------------------------------------------------------\n\n")
+
+                f.write("SAMEDI ")
+                saturday_date = self.le_saturday.text()
+                f.write(saturday_date)
+                f.write(" : \n\n")
+
+                saturday_missions_ids = get_ids_from_date(saturday_date)
+                if saturday_missions_ids != [] :
+                    for id in saturday_missions_ids :
+                        f.write(get_title_from_id(id).upper())
+                        f.write(" : ")
+                        f.write(get_localisation_from_id(id))
+                        f.write("  -  ")
+                        f.write(get_time_from_id(id))
+                        f.write("\n")
+                        f.write(get_description_from_id(id))
+                        f.write("\n")
+                        matos = get_matos_from_id(id)
+                        if matos != [] :
+                            for item in matos :
+                                f.write(item)
+                        f.write("\n\n")
+
+                f.write("----------------------------------------------------------------------------------------------\n\n")
+
+                f.write("DIMANCHE ")
+                sunday_date = self.le_sunday.text()
+                f.write(sunday_date)
+                f.write(" : \n\n")
+
+                sunday_missions_ids = get_ids_from_date(sunday_date)
+                if sunday_missions_ids != [] :
+                    for id in sunday_missions_ids :
+                        f.write(get_title_from_id(id).upper())
+                        f.write(" : ")
+                        f.write(get_localisation_from_id(id))
+                        f.write("  -  ")
+                        f.write(get_time_from_id(id))
+                        f.write("\n")
+                        f.write(get_description_from_id(id))
+                        f.write("\n")
+                        matos = get_matos_from_id(id)
+                        if matos != [] :
+                            for item in matos :
+                                f.write(item)
+                        f.write("\n\n")
+
+                f.close()
+
+        except FileNotFoundError :
+            pass
 
     def setup_dates_le(self, year, week_nbr): # Peuplement desLineEdits des dates du calendrier
         monday_list = []
